@@ -26,9 +26,9 @@ jobs:
       - name: Setup sqlpackage
         run: |
           wget -qO- https://aka.ms/sqlpackage-linux -O sqlpackage.zip
-          unzip -q sqlpackage.zip -d sqlpackage/
+          unzip -o -q sqlpackage.zip -d sqlpackage/
           chmod +x sqlpackage/sqlpackage
-
+          
       - name: Deploy DACPAC to Test Database
         run: |
           ./sqlpackage/sqlpackage \
