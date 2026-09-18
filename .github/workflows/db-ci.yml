@@ -28,10 +28,62 @@ jobs:
           wget -qO- https://aka.ms/sqlpackage-linux -O sqlpackage.zip
           unzip -o -q sqlpackage.zip -d sqlpackage/
           chmod +x sqlpackage/sqlpackage
-          
+
       - name: Deploy DACPAC to Test Database
         run: |
           ./sqlpackage/sqlpackage \
             /Action:Publish \
             /SourceFile:database/dacpac/DatabaseCicdLab.dacpac \
             /TargetConnectionString:'Server=localhost,1433;Database=CI_Test_DB;User Id=sa;Password=${{ secrets.SA_PASSWORD }};TrustServerCertificate=True;'
+
+      - name: Install and Run tSQLt Tests
+        run: |
+          # حذف أي ملف قديم
+          rm -f tSQLt.zip
+          
+          # تحميل tSQLt مباشرة من الموقع الرسمي
+          wget https://tsqlt.org/download/tsqlt/ -O tSQLt.zip
+          
+          # فك الضغط
+          unzip -o tSQLt.zip
+          
+          # تفعيل صلاحيات الـ CLR على قاعدة البيانات
+          /opt/mssql-tools18/bin/sqlcmd \
+            -S localhost,1433 \
+            -U sa \
+            -P "${{ secrets.SA_PASSWORD }}" \
+            -Q "USE CI_Test_DB; EXEC sp_configure 'clr enabled', 1; RECONFIGURE;" \
+            -C -b
+
+          # تثبيت إطار عمل tSQLt (المسار الصحيح مباشرة بدون مجلد فرعي)
+          /opt/mssql-tools18/bin/sqlcmd \
+            -S localhost,1433 \
+            -U sa \
+            -P "${{ secrets.SA_PASSWORD }}" \
+            -i tSQLt.class.sql \
+            -C -b
+
+          # إنشاء اختبار وحدة تجريبي للتحقق من وجود جدول Users
+          /opt/mssql-tools18/bin/sqlcmd \
+            -S localhost,1433 \
+            -U sa \
+            -P "${{ secrets.SA_PASSWORD }}" \
+            -Q "USE CI_Test_DB; 
+                EXEC tSQLt.NewTestClass 'UserModuleTests';
+                GO
+                CREATE PROCEDURE UserModuleTests.test_UsersTableExists
+                AS
+                BEGIN
+                  IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Users')
+                    EXEC tSQLt.Fail 'Users table does not exist!';
+                END;
+                GO" \
+            -C -b
+
+          # تشغيل جميع الاختبارات
+          /opt/mssql-tools18/bin/sqlcmd \
+            -S localhost,1433 \
+            -U sa \
+            -P "${{ secrets.SA_PASSWORD }}" \
+            -Q "USE CI_Test_DB; EXEC tSQLt.RunAll;" \
+            -C -b
