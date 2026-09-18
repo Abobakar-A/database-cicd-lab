@@ -38,9 +38,14 @@ jobs:
 
       - name: Install and Run tSQLt Tests
         run: |
-          # تحميل tSQLt باستخدام curl مع تفعيل الـ redirect لضمان النجاح
-          curl -L -s https://github.com/tSQLt/tSQLt/releases/download/v1.0.8695.27484/tSQLt.zip -O
-          unzip -o -q tSQLt.zip
+          # حذف أي ملف قديم تالف إن وجد
+          rm -f tSQLt.zip
+          
+          # تحميل tSQLt بالرابط المباشر وتسميته بـ tSQLt.zip بوضوح
+          curl -L -o tSQLt.zip https://github.com/tSQLt/tSQLt/releases/download/v1.0.8695.27484/tSQLt.zip
+          
+          # فك الضغط والتأكد من سلامة الملف
+          unzip -o tSQLt.zip
           
           # تفعيل صلاحيات الـ CLR على قاعدة البيانات
           /opt/mssql-tools18/bin/sqlcmd \
