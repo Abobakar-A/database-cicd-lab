@@ -1,0 +1,37 @@
+name: Database CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+
+jobs:
+  database-ci:
+    runs-on: ubuntu-latest
+
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        environment:
+          ACCEPT_EULA: "Y"
+          SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
+        ports:
+          - 1433:1433
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup sqlpackage
+        run: |
+          wget -qO- https://aka.ms/sqlpackage-linux -O sqlpackage.zip
+          unzip -q sqlpackage.zip -d sqlpackage/
+          chmod +x sqlpackage/sqlpackage
+
+      - name: Deploy DACPAC to Test Database
+        run: |
+          ./sqlpackage/sqlpackage \
+            /Action:Publish \
+            /SourceFile:database/dacpac/DatabaseCicdLab.dacpac \
+            /TargetConnectionString:'Server=localhost,1433;Database=CI_Test_DB;User Id=sa;Password=${{ secrets.SA_PASSWORD }};TrustServerCertificate=True;'
