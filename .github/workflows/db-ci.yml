@@ -2,9 +2,9 @@ name: Database CI/CD Pipeline
 
 on:
   push:
-    branches: [ "master", "main" ]
+    branches: [ "master", "main", "root" ]
   pull_request:
-    branches: [ "master", "main" ]
+    branches: [ "master", "main", "root" ]
 
 jobs:
   database-ci:
@@ -13,7 +13,7 @@ jobs:
     services:
       sqlserver:
         image: mcr.microsoft.com/mssql/server:2022-latest
-        environment:
+        env:
           ACCEPT_EULA: "Y"
           SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
         ports:
