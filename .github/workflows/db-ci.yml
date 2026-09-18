@@ -41,8 +41,8 @@ jobs:
           # حذف أي ملف قديم
           rm -f tSQLt.zip
           
-          # تحميل أحدث إصدار مستقر من tSQLt مباشرة لتجنب روابط الـ 404 القديمة
-          wget https://github.com/tSQLt/tSQLt/releases/latest/download/tSQLt.zip -O tSQLt.zip
+          # تحميل tSQLt مباشرة من الموقع الرسمي لتجنب إعادة التوجيه الخاطئة في جيثب
+          wget https://tsqlt.org/download/tsqlt/ -O tSQLt.zip
           
           # التحقق من حجم الملف
           ls -l tSQLt.zip
